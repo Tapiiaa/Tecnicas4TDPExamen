@@ -1,131 +1,104 @@
 package AlanTurin_ElProblemaDeParar;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainFrame extends JFrame {
     private JButton countUpButton;
     private JButton countDownButton;
     private JButton reverserButton;
-    private JTextArea outputArea;
     private JPanel buttonPanel;
+    private JTextArea textArea;
 
     public MainFrame() {
         super("Demo Program");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        outputArea = new JTextArea();
-        outputArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(outputArea);
-        scrollPane.setPreferredSize(new Dimension(380, 200));
-
-        buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout());
-
+        // Crear los botones
         countUpButton = new JButton("Contar hacia arriba");
         countDownButton = new JButton("Contar hacia abajo");
         reverserButton = new JButton("Reverser");
 
-        countUpButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Thread countUpThread = new Thread(MainFrame.this::countUp);
-                countUpThread.start();
-            }
-        });
+        // Crear el área de texto
+        textArea = new JTextArea(5, 20);  // Establecer tamaño del área de texto
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
 
-        countDownButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Thread countDownThread = new Thread(MainFrame.this::countDown);
-                countDownThread.start();
-            }
-        });
+        // Crear el panel para los botones y establecer su layout
+        buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
 
-        reverserButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setupReverser();
-            }
-        });
-
+        // Agregar los botones al panel
         buttonPanel.add(countUpButton);
         buttonPanel.add(countDownButton);
         buttonPanel.add(reverserButton);
 
+        // Agregar el panel de botones al sur del JFrame
         add(scrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        setLocationRelativeTo(null);
+        // Ajustar el tamaño de la ventana al contenido
+        pack();
+        setMinimumSize(getSize()); // Establecer el tamaño mínimo basado en el tamaño del pack
+
+        // Definir las acciones de los botones
+        countUpButton.addActionListener(e -> startCounting(true));
+        countDownButton.addActionListener(e -> startCounting(false));
+        reverserButton.addActionListener(e -> openReverserWindow());
+
+        // Hacer visible el JFrame
         setVisible(true);
     }
 
-    private void countUp() {
-        AtomicInteger count = new AtomicInteger();
-        while (true) {
-            SwingUtilities.invokeLater(() -> outputArea.append(count.getAndIncrement() + "\n"));
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    private void countDown() {
-        AtomicInteger count = new AtomicInteger(10);
-        while (count.get() >= 0) {
-            SwingUtilities.invokeLater(() -> outputArea.append(count.getAndDecrement() + "\n"));
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Ha finalizado el programa"));
-    }
-
-    private void setupReverser() {
+    private void openReverserWindow() {
         JFrame reverserFrame = new JFrame("Reverser Options");
-        reverserFrame.setSize(300, 200);
+        reverserFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        reverserFrame.setSize(200, 100);
         reverserFrame.setLayout(new FlowLayout());
         reverserFrame.setLocationRelativeTo(this);
 
-        JButton upButton = new JButton("Contar hacia arriba");
-        JButton downButton = new JButton("Contar hacia abajo");
+        JButton newCountUpButton = new JButton("CountUp");
+        JButton newCountDownButton = new JButton("CountDown");
 
-        upButton.addActionListener(e -> {
-            if (!HaltChecker.getInstance().willHalt("while (true) { }")) {
-                while (true) {
-                    SwingUtilities.invokeLater(() -> outputArea.append("Reverser Loop\n"));
-                }
-            } else {
-                outputArea.append("Reverser Ends\n");
-                reverserFrame.dispose();
-            }
-        });
+        reverserFrame.add(newCountUpButton);
+        reverserFrame.add(newCountDownButton);
 
-        downButton.addActionListener(e -> {
-            if (HaltChecker.getInstance().willHalt("int i = 10; while (i > 0) { i--; }")) {
-                while (true) {
-                    SwingUtilities.invokeLater(() -> outputArea.append("Reverser Loop\n"));
-                }
-            } else {
-                outputArea.append("Reverser Ends\n");
-                reverserFrame.dispose();
-            }
-        });
-
-        reverserFrame.add(upButton);
-        reverserFrame.add(downButton);
         reverserFrame.setVisible(true);
+    }
+
+    private void startCounting(boolean countUp) {
+        new Thread(() -> {
+            AtomicInteger count = new AtomicInteger(countUp ? 0 : 10);
+            if (countUp) {
+                while (true) {
+                    int currentCount = count.incrementAndGet();
+                    SwingUtilities.invokeLater(() -> textArea.append(currentCount + "\n"));
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            } else {
+                while (count.get() >= 0) {
+                    int currentCount = count.getAndDecrement();
+                    SwingUtilities.invokeLater(() -> textArea.append(currentCount + "\n"));
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this, "Programa ha finalizado"));
+            }
+        }).start();
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(MainFrame::new);
     }
 }
+
+
 
