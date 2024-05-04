@@ -11,7 +11,7 @@ public class MainFrame extends JFrame {
     private JTextArea textArea;
 
     public MainFrame() {
-        super("Demo Program");
+        super("Alan Turing - El Problema de Parar, Por Pedro Tapia Lobo");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -22,12 +22,12 @@ public class MainFrame extends JFrame {
         reverserButton = new JButton("Reverser");
 
         // Crear el área de texto
-        textArea = new JTextArea(5, 20);  // Establecer tamaño del área de texto
+        textArea = new JTextArea(5, 30);  // Ajustado para mayor visibilidad
         textArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(textArea);
 
         // Crear el panel para los botones y establecer su layout
-        buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
 
         // Agregar los botones al panel
         buttonPanel.add(countUpButton);
@@ -39,8 +39,8 @@ public class MainFrame extends JFrame {
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Ajustar el tamaño de la ventana al contenido
-        pack();
-        setMinimumSize(getSize()); // Establecer el tamaño mínimo basado en el tamaño del pack
+        setSize(500, 350);
+        setMinimumSize(getSize());
 
         // Definir las acciones de los botones
         countUpButton.addActionListener(e -> startCounting(true));
@@ -54,17 +54,43 @@ public class MainFrame extends JFrame {
     private void openReverserWindow() {
         JFrame reverserFrame = new JFrame("Reverser Options");
         reverserFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        reverserFrame.setSize(200, 100);
         reverserFrame.setLayout(new FlowLayout());
         reverserFrame.setLocationRelativeTo(this);
 
         JButton newCountUpButton = new JButton("CountUp");
         JButton newCountDownButton = new JButton("CountDown");
 
+        newCountUpButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(reverserFrame,
+                    "Reverser evaluando: CountUp\n" +
+                            "Reverser determina que ContarHaciaArriba no se detendrá, terminando inmediatamente.");
+            reverserFrame.dispose();
+        });
+
+        newCountDownButton.addActionListener(e -> {
+            reverserFrame.dispose();
+            enterInfiniteLoop();
+        });
+
         reverserFrame.add(newCountUpButton);
         reverserFrame.add(newCountDownButton);
 
+        reverserFrame.pack();
+        reverserFrame.setSize(300, 150);
         reverserFrame.setVisible(true);
+    }
+
+    private void enterInfiniteLoop() {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    SwingUtilities.invokeLater(() -> textArea.append("Reverser entrando a un bucle infinito puesto que el programa se detendrá\n"));
+                    Thread.sleep(1000); // Delay para hacer el bucle manejable y evitar sobrecargar la UI
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }).start();
     }
 
     private void startCounting(boolean countUp) {
@@ -99,6 +125,8 @@ public class MainFrame extends JFrame {
         SwingUtilities.invokeLater(MainFrame::new);
     }
 }
+
+
 
 
 
